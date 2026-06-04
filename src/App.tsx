@@ -32,20 +32,81 @@ function MicroSparkline({
   if (!data || data.length === 0) {
     return <div className="h-9 w-full" />;
   }
+
+  // Extract values
+  const values = data.map((item) => item[dataKey] ?? 0);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const range = maxVal - minVal;
+
+  const width = 100;
+  const height = 30;
+
+  // Coordinate mapping
+  const points = values.map((val, idx) => {
+    const x = idx * (width / Math.max(1, values.length - 1));
+    const y = range === 0 ? height / 2 : height - ((val - minVal) / range) * height;
+    return { x, y };
+  });
+
+  // Construct path string
+  let pathD = "";
+  if (points.length > 0) {
+    pathD = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      pathD += ` L ${points[i].x} ${points[i].y}`;
+    }
+  }
+
+  // Gradient area fill string
+  let fillPathD = "";
+  if (points.length > 0) {
+    fillPathD = `${pathD} L ${points[points.length - 1].x} ${height} L ${points[0].x} ${height} Z`;
+  }
+
+  const gradId = `spark-grad-${dataKey}`;
+
   return (
     <div className="h-9 w-full mt-2 overflow-hidden select-none pointer-events-none">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
-          <Line
-            type="monotone"
-            dataKey={dataKey}
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full h-full overflow-visible"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={stroke} stopOpacity={0.4} />
+            <stop offset="100%" stopColor={stroke} stopOpacity={0.0} />
+          </linearGradient>
+        </defs>
+
+        {/* Fill area below the curve */}
+        {fillPathD && (
+          <path d={fillPathD} fill={`url(#${gradId})`} stroke="none" />
+        )}
+
+        {/* Line stroke */}
+        {pathD && (
+          <path
+            d={pathD}
+            fill="none"
             stroke={stroke}
-            strokeWidth={1.75}
-            dot={false}
-            isAnimationActive={false}
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-        </LineChart>
-      </ResponsiveContainer>
+        )}
+
+        {/* Pulsing visual end indicator */}
+        {points.length > 0 && (
+          <circle
+            cx={points[points.length - 1].x}
+            cy={points[points.length - 1].y}
+            r={1.5}
+            fill={stroke}
+          />
+        )}
+      </svg>
     </div>
   );
 }
