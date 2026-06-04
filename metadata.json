@@ -1,0 +1,6 @@
+{
+  "name": "Space Weather Dashboard",
+  "description": "An interactive real-time space weather portal tracking solar wind velocity, geomagnetic storm indexes, GOES X-ray flare classes, alongside an AI science desk powered by Gemini 3.5 Flash.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
